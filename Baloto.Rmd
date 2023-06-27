@@ -1,0 +1,150 @@
+---
+title: "Baloto"
+author: "Andres Rodriguez"
+date: "2023-06-25"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+getwd()
+library(printr)
+library(lubridate)
+```
+
+# Extraccion de datos
+
+Los datos fueron obtenidos de la pagina oficial de Baloto "<https://www.balotoresultados.co/historico>" a partir del año 2017
+
+El dataset compuesto de :
+
+| **Variable** | **Tipo** |       **Descripción**       |
+|:-------------|:--------:|:---------------------------:|
+| Fecha        |   Date   |      Fecha del sorteo       |
+| Balota_1     |   Int    |  Resultado de la balota 1   |
+| Balota_2     |   Int    |  Resultado de la balota 2   |
+| Balota_3     |   Int    |  Resultado de la balota 3   |
+| Balota_4     |   Int    |  Resultado de la balota 4   |
+| Balota_5     |   Int    |  Resultado de la balota 5   |
+| Super_balota |   Int    | Resultado de la superbalota |
+
+Se cargan los datos y ajustan formatos de variables
+
+```{r Carga_de_datos}
+baloto <- read.csv("Data/baloto.csv")
+names(baloto) <- c("Fecha", "Balota_1", "Balota_2", "Balota_3", "Balota_4", "Balota_5", "Super_balota")
+baloto$Fecha <- as.Date(baloto$Fecha, format = '%m/%d/%Y')
+baloto$anio = year(baloto$Fecha)
+# Se muestran los primeros 5 registros del dataset
+head(baloto)
+# Se comprueba formato de las variables
+str(baloto)
+```
+# Analisis descriptivo
+
+Se revisan estadísticos básicos y aqui algunas particuladirades que cuando menos resultan interesantes:
+
+-   Parece que la balota Nº 4 no ha sacado valor `1` por lo menos desde la muestra de los datos.
+
+Siendo un juego de azar quizá se podría esperar una distribución de frecuencias uniforme, sin embargo:
+
+1.  La balota Nº 1 concentra el 75% de sus resultados con valores \<= 13
+
+2.   Lo contrario sucede con la balota Nº 5 en la que sus resultados (50%) están concentrados en 13% de sus valores.
+
+3.  El resto de balotas parecen tener un comportamiento un poco mas "uniforme" aunque igualmente se pueden denotar algunas tendencias.
+
+```{r summary, echo = F}
+summary(baloto)
+```
+
+```{r frecuencias, fig.height= 15, fig.width= 12, echo=F}
+par(mfrow= c(3, 2))
+barplot(table(baloto$Balota_1), main ='Frecuencias balota 1', cex.main = 2, cex.lab = 1.5,
+        ylim = c(0, 85), ylab = "Repeticiones", xlab = "Numero balota", col = "#ACA4E2")
+barplot(table(baloto$Balota_2), main ='Frecuencias balota 2', cex.main = 2, cex.lab = 1.5,
+        ylim = c(0, 85), ylab = "Repeticiones", xlab = "Numero balota", col = "#9AA9E2")
+barplot(table(baloto$Balota_3), main ='Frecuencias balota 3', cex.main = 2, cex.lab = 1.5,
+        ylim = c(0, 85), ylab = "Repeticiones", xlab = "Numero balota", col = "#7FB0DE")
+barplot(table(baloto$Balota_4), main ='Frecuencias balota 4', cex.main = 2, cex.lab = 1.5,
+        ylim = c(0, 85), ylab = "Repeticiones", xlab = "Numero balota", col = "#63B6D6")
+barplot(table(baloto$Balota_5), main ='Frecuencias balota 5', cex.main = 2, cex.lab = 1.5,
+        ylim = c(0, 85), ylab = "Repeticiones", xlab = "Numero balota", col = "#49BACA")
+barplot(table(baloto$Super_balota), main ='Frecuencias super balota', cex.main = 2, cex.lab = 1.5,
+        ylim = c(0, 85), ylab = "Repeticiones", xlab = "Numero balota", col = "#38BDBC")
+par(mfrow= c(1, 1))
+```
+
+Valor medio resultado de cada balota con el rango de desviación muestral: 
+
+
+| **Variable** | **Balota Media**                        | **$\pm$ Balotas**                     |
+|:-------------|:---------------------------------------:|:-------------------------------------:|
+| Balota_1     | `r round(mean(baloto$Balota_1), 0)`     | `r round(sd(baloto$Balota_1), 0)`     |
+| Balota_2     | `r round(mean(baloto$Balota_2), 0)`     | `r round(sd(baloto$Balota_2), 0)`     |
+| Balota_3     | `r round(mean(baloto$Balota_3), 0)`     | `r round(sd(baloto$Balota_3), 0)`     |
+| Balota_4     | `r round(mean(baloto$Balota_4), 0)`     | `r round(sd(baloto$Balota_4), 0)`     |
+| Balota_5     | `r round(mean(baloto$Balota_5), 0)`     | `r round(sd(baloto$Balota_5), 0)`     |
+| Super_balota | `r round(mean(baloto$Super_balota), 0)` | `r round(sd(baloto$Super_balota), 0)` |
+
+## Agrupando variables
+
+```{r, graficos_de_mosaicos, fig.height= 15, fig.width= 15, echo=F}
+
+baloto$balota_1_agrup <- cut(baloto$Balota_1, breaks = c(1, 9, 43), right = FALSE)
+baloto$balota_2_agrup <- cut(baloto$Balota_2, breaks = c(1, 23, 43), right = FALSE)
+baloto$balota_3_agrup <- cut(baloto$Balota_3, breaks = c(1, 15, 30, 43), right = FALSE)
+baloto$balota_4_agrup <- cut(baloto$Balota_4, breaks = c(1, 25, 43), right = FALSE)
+baloto$balota_5_agrup <- cut(baloto$Balota_5, breaks = c(1, 33, 43), right = FALSE)
+
+```
+
+
+```{r mosaicos, fig.height= 16, fig.width= 12, echo=F}
+par(mfrow= c(3, 2))
+plot(table(baloto$anio, baloto$balota_1_agrup), main = "Relacion entre año y agrupacion de balotas segun su frecuencia \n Balota Nº 1", xlab = 'Año del resultado', ylab = 'Balotas agrupadas', col = c('aliceblue', 'beige'))
+plot(table(baloto$anio, baloto$balota_2_agrup), 
+     main = "Relacion entre año y agrupacion de balotas segun su frecuencia \n Balota Nº 2",
+     xlab = 'Año del resultado', ylab = 'Balotas agrupadas',      col = c('aliceblue', 'beige'))
+plot(table(baloto$anio, baloto$balota_3_agrup), 
+     main = "Relacion entre año y agrupacion de balotas segun su frecuencia \n Balota Nº 3",
+     xlab = 'Año del resultado', ylab = 'Balotas agrupadas',      col = c('aliceblue', 'beige'))
+plot(table(baloto$anio, baloto$balota_4_agrup), 
+     main = "Relacion entre año y agrupacion de balotas segun su frecuencia \n Balota Nº 4",
+     xlab = 'Año del resultado', ylab = 'Balotas agrupadas',      col = c('aliceblue', 'beige'))
+plot(table(baloto$anio, baloto$balota_5_agrup), 
+     main = "Relacion entre año y agrupacion de balotas segun su frecuencia \n Balota Nº 5",
+     xlab = 'Año del resultado', ylab = 'Balotas agrupadas',      col = c('aliceblue', 'beige'))
+
+```
+
+Una Particular relacion se encuentra entre la balota nº 3 y balota nº4 ya que pareciere indicar:
+
+1. Correlacion directa entre balota Nº 3 y Nº2
+2. COrrelacion inversa entre balota Nº 3 y Nº4
+
+
+```{r, fig.height=4, fig.width=12}
+par(mfrow = c(1, 3))
+plot(baloto$Balota_3, baloto$Balota_2, main = "Relacion entre Balota Nº3 y Balota Nº2", cex.main = 0.8, 
+     cex.axis = 0.8, ylab = 'Balota 2', xlab = 'Balota 3', col = 'red')
+plot(baloto$Balota_3, baloto$Balota_4, main = "Relacion entre Balota Nº3 y Balota Nº4", cex.main = 0.8, 
+    cex.axis = 0.8,  ylab = 'Balota 4', xlab = 'Balota 3', col = 'red')
+plot(baloto$Balota_1, baloto$Balota_5, main = "Relacion entre Balota Nº1 y Balota Nº5", cex.main = 0.8, 
+    cex.axis = 0.8,  ylab = 'Balota 5', xlab = 'Balota 1', col = 'red')
+```
+
+Para observar mejor esta relación, se agrega matriz de correlación entre las balotas:
+
+```{r correlacion, echo=F}
+library(corrplot)
+corr<- cor(baloto[,2:6])
+corrplot(corr, method = 'number', type = 'lower', tl.cex = 0.8, tl.col = 'black')
+```
+
+Mas alla de tendencias que se puedan observar y como estas cambian en el tiempo, al ser un juego de azar vemos como no se mantienen o relacionan variables de los resultados entre si, si bien algunos datos y valores que definitivamente siguen siendo vagos en función de buscar un patrón claro, para llegar a esto se deberían poder incluir mas variables y factores en la ejecución de cada sorteo, (temperatura, peso de las balotas, presión al interior de cada bolsa etc) la descriptiva de los resultados, quiza pueda ayudarte a decidir mejor que opciones tomar al momento de jugar.
+
+Y no olvides que mas alla de alguna tendencia o valor repetitivo tu probabilidad de ganarte el baloto es del **0.0000006%**
+
+
+
