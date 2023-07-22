@@ -2,7 +2,9 @@
 title: "Baloto"
 author: "Andres Rodriguez"
 date: "2023-06-25"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
